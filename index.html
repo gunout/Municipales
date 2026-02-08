@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de Bord - Élections Municipales 5ème République</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding-bottom: 40px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        header {
+            background: linear-gradient(to right, #1e3c72, #2a5298);
+            color: white;
+            padding: 25px 0;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 {
+            font-size: 2.4rem;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .period-selector {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .period-btn {
+            padding: 10px 20px;
+            background-color: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .period-btn:hover, .period-btn.active {
+            background-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            padding: 25px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .card-title {
+            font-size: 1.4rem;
+            color: #2a5298;
+            font-weight: 600;
+        }
+        
+        .card-icon {
+            font-size: 1.5rem;
+            color: #2a5298;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+        }
+        
+        .analysis-section {
+            margin-top: 40px;
+        }
+        
+        .analysis-title {
+            font-size: 1.8rem;
+            color: #2a5298;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+        }
+        
+        .analysis-card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            padding: 25px;
+        }
+        
+        .party-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .party-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        
+        .party-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .party-color-ps { background-color: #FF5F5F; }
+        .party-color-lrem { background-color: #FFB74D; }
+        .party-color-lr { background-color: #4A90E2; }
+        .party-color-eelv { background-color: #6BCF7F; }
+        .party-color-pcf { background-color: #E53935; }
+        .party-color-rn { background-color: #1A237E; }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2a5298;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .key-takeaway {
+            background-color: #e8f4fd;
+            border-left: 4px solid #2a5298;
+            padding: 20px;
+            margin-top: 30px;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .key-takeaway h3 {
+            color: #2a5298;
+            margin-bottom: 10px;
+        }
+        
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .analysis-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .period-selector {
+                margin-top: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div>
+                    <h1>Élections Municipales de la 5ème République</h1>
+                    <p class="subtitle">Analyse comparative des résultats par parti politique (1959-2020)</p>
+                </div>
+                <div>
+                    <i class="fas fa-vote-yea fa-3x"></i>
+                </div>
+            </div>
+            <div class="period-selector">
+                <button class="period-btn active" data-period="all">Toute la période</button>
+                <button class="period-btn" data-period="early">1959-1983</button>
+                <button class="period-btn" data-period="mid">1989-2008</button>
+                <button class="period-btn" data-period="recent">2014-2020</button>
+            </div>
+        </div>
+    </header>
+    
+    <main class="container">
+        <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Évolution des Municipalités par Parti</h2>
+                    <div class="card-icon"><i class="fas fa-chart-line"></i></div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="evolutionChart"></canvas>
+                </div>
+                <div class="legend" id="evolutionLegend"></div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Répartition Actuelle (2020)</h2>
+                    <div class="card-icon"><i class="fas fa-chart-pie"></i></div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="currentChart"></canvas>
+                </div>
+                <div class="legend" id="currentLegend"></div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Villes Majeures par Parti (2020)</h2>
+                    <div class="card-icon"><i class="fas fa-city"></i></div>
+                </div>
+                <div id="majorCities">
+                    <p><strong>PS & alliés:</strong> Paris, Lille, Rennes, Nantes, Strasbourg</p>
+                    <p><strong>LR & alliés:</strong> Lyon, Toulouse, Nice, Toulon</p>
+                    <p><strong>LREM & alliés:</strong> Le Havre, Tours, Angers</p>
+                    <p><strong>EELV & alliés:</strong> Bordeaux, Grenoble, Marseille</p>
+                    <p><strong>Autres:</strong> Perpignan (RN), Montpellier (DVG)</p>
+                </div>
+                <div class="chart-container">
+                    <canvas id="citiesChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="analysis-section">
+            <h2 class="analysis-title">Analyse Comparative par Parti Politique</h2>
+            
+            <div class="analysis-grid">
+                <div class="analysis-card">
+                    <div class="party-header">
+                        <div class="party-logo party-color-ps">PS</div>
+                        <div class="party-name">Parti Socialiste & Gauche</div>
+                    </div>
+                    <p>Historiquement dominant dans les grandes et moyennes villes, le PS a connu un net recul depuis 2014 au profit des écologistes et de la droite.</p>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value">34%</div>
+                            <div class="stat-label">Municipalités >20k hab. (2014)</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">21%</div>
+                            <div class="stat-label">Municipalités >20k hab. (2020)</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">-38%</div>
+                            <div class="stat-label">Évolution 2014-2020</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="analysis-card">
+                    <div class="party-header">
+                        <div class="party-logo party-color-lr">LR</div>
+                        <div class="party-name">Les Républicains & Droite</div>
+                    </div>
+                    <p>La droite classique maintient une forte implantation dans les villes moyennes et certaines grandes villes, résistant bien à la poussée LREM.</p>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value">42%</div>
+                            <div class="stat-label">Municipalités >20k hab. (2014)</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">38%</div>
+                            <div class="stat-label">Municipalités >20k hab. (2020)</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">-10%</div>
+                            <div class="stat-label">Évolution 2014-2020</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="analysis-card">
+                    <div class="party-header">
+                        <div class="party-logo party-color-lrem">LREM</div>
+                        <div class="party-name">La République En Marche</div>
+                    </div>
+                    <p>Parti présidentiel créé en 2016, LREM a réalisé une percée significative en 2020 malgré un ancrage local limité, principalement dans les villes moyennes.</p>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value">0%</div>
+                            <div class="stat-label">Municipalités >20k hab. (2014)</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">8%</div>
+                            <div class="stat-label">Municipalités >20k hab. (2020)</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">Nouveau</div>
+                            <div class="stat-label">Première participation</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="analysis-grid" style="margin-top: 25px;">
+                <div class="analysis-card">
+                    <div class="party-header">
+                        <div class="party-logo party-color-eelv">EELV</div>
+                        <div class="party-name">Europe Écologie Les Verts</div>
+                    </div>
+                    <p>Le grand gagnant des municipales 2020 avec une percée historique dans les grandes villes, capitalisant sur la préoccupation environnementale.</p>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value">3%</div>
+                            <div class="stat-label">Municipalités >20k hab. (2014)</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">12%</div>
+                            <div class="stat-label">Municipalités >20k hab. (2020)</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">+300%</div>
+                            <div class="stat-label">Évolution 2014-2020</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="analysis-card">
+                    <div class="party-header">
+                        <div class="party-logo party-color-rn">RN</div>
+                        <div class="party-name">Rassemblement National</div>
+                    </div>
+                    <p>Malgré des scores nationaux importants, le RN peine à s'implanter durablement dans les municipalités, avec quelques bastions historiques.</p>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value">1%</div>
+                            <div class="stat-label">Municipalités >20k hab. (2014)</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">2%</div>
+                            <div class="stat-label">Municipalités >20k hab. (2020)</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">+100%</div>
+                            <div class="stat-label">Évolution 2014-2020</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="analysis-card">
+                    <div class="party-header">
+                        <div class="party-logo party-color-pcf">PCF</div>
+                        <div class="party-name">Parti Communiste & Extrême-Gauche</div>
+                    </div>
+                    <p>En déclin constant depuis les années 1980, le PCF conserve quelques municipalités emblématiques mais a largement cédé la gauche aux écologistes.</p>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value">8%</div>
+                            <div class="stat-label">Municipalités >20k hab. (1995)</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">3%</div>
+                            <div class="stat-label">Municipalités >20k hab. (2020)</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">-62%</div>
+                            <div class="stat-label">Évolution 1995-2020</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="key-takeaway">
+                <h3><i class="fas fa-lightbulb"></i> Principale Conclusion</h3>
+                <p>Les élections municipales de 2020 ont marqué un tournant avec la <strong>poussée historique des écologistes</strong> dans les grandes villes et le <strong>recul significatif du Parti Socialiste</strong>. La droite classique résiste mieux que la gauche traditionnelle face à LREM, qui réalise une percée limitée mais réelle. Ces résultats illustrent la <strong>recomposition du paysage politique français</strong> avec l'émergence de nouvelles forces et le déclin des partis traditionnels.</p>
+            </div>
+        </div>
+    </main>
+    
+    <footer class="container">
+        <p>© 2023 Tableau de Bord des Élections Municipales de la 5ème République | Données synthétiques basées sur les résultats des élections municipales de 1959 à 2020</p>
+        <p style="margin-top: 10px; font-size: 0.8rem;">Note: Les pourcentages représentent la part des municipalités de plus de 20 000 habitants dirigées par chaque parti.</p>
+    </footer>
+    
+    <script>
+        // Données pour les graphiques
+        const electionData = {
+            years: [1965, 1971, 1977, 1983, 1989, 1995, 2001, 2008, 2014, 2020],
+            parties: {
+                "Droite (LR & alliés)": {
+                    color: "#4A90E2",
+                    data: [48, 45, 42, 44, 46, 45, 43, 42, 42, 38]
+                },
+                "Gauche (PS & alliés)": {
+                    color: "#FF5F5F",
+                    data: [28, 32, 38, 40, 38, 36, 40, 38, 34, 21]
+                },
+                "Communistes (PCF)": {
+                    color: "#E53935",
+                    data: [18, 17, 15, 12, 10, 8, 6, 5, 4, 3]
+                },
+                "Écologistes (EELV)": {
+                    color: "#6BCF7F",
+                    data: [0, 0, 0, 1, 2, 3, 4, 4, 3, 12]
+                },
+                "Extrême-droite (RN)": {
+                    color: "#1A237E",
+                    data: [0, 0, 0, 0, 1, 1, 1, 1, 1, 2]
+                },
+                "Centre (LREM & alliés)": {
+                    color: "#FFB74D",
+                    data: [6, 6, 5, 3, 3, 7, 6, 10, 16, 24]
+                }
+            },
+            currentDistribution: {
+                "Droite (LR & alliés)": 38,
+                "Gauche (PS & alliés)": 21,
+                "Centre (LREM & alliés)": 8,
+                "Écologistes (EELV)": 12,
+                "Communistes (PCF)": 3,
+                "Extrême-droite (RN)": 2,
+                "Divers": 16
+            },
+            citiesByParty: {
+                labels: ["Paris", "Lyon", "Marseille", "Toulouse", "Nice", "Nantes", "Strasbourg", "Bordeaux"],
+                datasets: [
+                    {
+                        label: "PS & Gauche",
+                        data: [100, 0, 50, 0, 0, 100, 100, 0],
+                        backgroundColor: "#FF5F5F"
+                    },
+                    {
+                        label: "LR & Droite",
+                        data: [0, 100, 0, 100, 100, 0, 0, 0],
+                        backgroundColor: "#4A90E2"
+                    },
+                    {
+                        label: "EELV & Écologistes",
+                        data: [0, 0, 50, 0, 0, 0, 0, 100],
+                        backgroundColor: "#6BCF7F"
+                    }
+                ]
+            }
+        };
+
+        // Initialisation des graphiques
+        document.addEventListener('DOMContentLoaded', function() {
+            // Graphique d'évolution
+            const evolutionCtx = document.getElementById('evolutionChart').getContext('2d');
+            const evolutionChart = new Chart(evolutionCtx, {
+                type: 'line',
+                data: {
+                    labels: electionData.years,
+                    datasets: Object.keys(electionData.parties).map(party => ({
+                        label: party,
+                        data: electionData.parties[party].data,
+                        borderColor: electionData.parties[party].color,
+                        backgroundColor: electionData.parties[party].color + '20',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.3
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Année des élections municipales'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: '% des municipalités >20k hab.'
+                            },
+                            min: 0,
+                            max: 50,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Légende pour le graphique d'évolution
+            const evolutionLegend = document.getElementById('evolutionLegend');
+            Object.keys(electionData.parties).forEach(party => {
+                const legendItem = document.createElement('div');
+                legendItem.className = 'legend-item';
+                legendItem.innerHTML = `
+                    <div class="legend-color" style="background-color: ${electionData.parties[party].color}"></div>
+                    <span>${party}</span>
+                `;
+                evolutionLegend.appendChild(legendItem);
+            });
+
+            // Graphique de répartition actuelle
+            const currentCtx = document.getElementById('currentChart').getContext('2d');
+            const currentChart = new Chart(currentCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(electionData.currentDistribution),
+                    datasets: [{
+                        data: Object.values(electionData.currentDistribution),
+                        backgroundColor: [
+                            '#4A90E2', // LR
+                            '#FF5F5F', // PS
+                            '#FFB74D', // LREM
+                            '#6BCF7F', // EELV
+                            '#E53935', // PCF
+                            '#1A237E', // RN
+                            '#AAAAAA'  // Divers
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Légende pour le graphique actuel
+            const currentLegend = document.getElementById('currentLegend');
+            const currentColors = ['#4A90E2', '#FF5F5F', '#FFB74D', '#6BCF7F', '#E53935', '#1A237E', '#AAAAAA'];
+            Object.keys(electionData.currentDistribution).forEach((party, index) => {
+                const legendItem = document.createElement('div');
+                legendItem.className = 'legend-item';
+                legendItem.innerHTML = `
+                    <div class="legend-color" style="background-color: ${currentColors[index]}"></div>
+                    <span>${party}</span>
+                `;
+                currentLegend.appendChild(legendItem);
+            });
+
+            // Graphique des villes
+            const citiesCtx = document.getElementById('citiesChart').getContext('2d');
+            const citiesChart = new Chart(citiesCtx, {
+                type: 'bar',
+                data: electionData.citiesByParty,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            stacked: true
+                        },
+                        y: {
+                            stacked: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                },
+                                max: 100
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Gestion des boutons de période
+            const periodButtons = document.querySelectorAll('.period-btn');
+            periodButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    periodButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Filtrer les données selon la période sélectionnée
+                    const period = this.dataset.period;
+                    let startIndex = 0;
+                    let endIndex = electionData.years.length;
+                    
+                    if (period === 'early') {
+                        startIndex = 0;
+                        endIndex = 4; // Jusqu'à 1983
+                    } else if (period === 'mid') {
+                        startIndex = 4; // À partir de 1989
+                        endIndex = 8; // Jusqu'à 2008
+                    } else if (period === 'recent') {
+                        startIndex = 8; // À partir de 2014
+                        endIndex = electionData.years.length;
+                    }
+                    
+                    // Mettre à jour le graphique d'évolution
+                    evolutionChart.data.labels = electionData.years.slice(startIndex, endIndex);
+                    
+                    Object.keys(electionData.parties).forEach((party, i) => {
+                        evolutionChart.data.datasets[i].data = electionData.parties[party].data.slice(startIndex, endIndex);
+                    });
+                    
+                    evolutionChart.update();
+                });
+            });
+        });
+    </script>
+</body>
+</html>
